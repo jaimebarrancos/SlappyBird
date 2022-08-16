@@ -39,9 +39,9 @@ class Bird(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         
         self.isSlapping = False
+        self.isJumping = False
 
         self.image = pygame.image.load('assets/sprites/bird/fly/passaro_direita.png').convert_alpha()
-        self.image = pygame.transform.scale(self.image, (600, 600))
         self.rect = self.image.get_rect()
         self.rect[0] = 860
         self.rect[1] = 80
@@ -50,31 +50,25 @@ class Bird(pygame.sprite.Sprite):
         self.animation_frames = 9 # how many frames to wait before changing animation
         self.current_frame = 0
         self.index = 0
-        self.AllAnimImages = getImageList(bird_fly_path)
 
+        self.AllAnimImages = getImageList(bird_fly_path)
         self.AnimImage = self.AllAnimImages[self.index] # 'AnimImage' is the current image of the animation.
                 
         self.AllSlapAnimImages = getImageList('assets/sprites/bird/slap')
         self.slapAnimNum = len(self.AllSlapAnimImages)
 
     def update(self):
-        self.current_frame += 1
-
         if self.isSlapping:
-            if self.index + 1 < self.slapAnimNum:
-                if self.current_frame >= self.animation_frames: # has to wait for frames to change animation
-                    self.current_frame = 0
-                    self.index = (self.index + 1) % len(self.AllSlapAnimImages)
-                    self.AnimImage = self.AllSlapAnimImages[self.index]
-            else:
-                self.isSlapping = False
-        else: # can add elifs
-            if self.current_frame >= self.animation_frames: # has to wait for frames to change animation
-                self.current_frame = 0
-                self.index = (self.index + 1) % len(self.AllAnimImages)
-                self.AnimImage = self.AllAnimImages[self.index]
+            self.runAnimation(self.animation_frames, self.AllSlapAnimImages)
+            
+        else:
+            self.runAnimation(self.animation_frames, self.AllAnimImages) # fly
 
-        self.image = pygame.transform.scale(self.AnimImage, birdSize) # image is from Sprite class outside my code
+        #elif self.isJumping:
+            #self.runAnimation(numOfFramesInAnim, numOfWaitFrames)
+
+        #self.image = pygame.transform.scale(self.AnimImage, birdSize) # image is from Sprite class outside my code
+        self.image = self.AnimImage
 
         #update mask
         self.mask = pygame.mask.from_surface(self.image) # image without background to handle collision
@@ -86,9 +80,29 @@ class Bird(pygame.sprite.Sprite):
         self.rect[1] = self.rect[1] + self.speed
 
     def slap(self):
+        self.current_frame = 10
         self.index = 0 # restart index for slappin animation start in beggining
         self.isSlapping = True
         #play slapping animation
+
+    def jump(self):
+        self.index = 0 # restart index for slappin animation start in beggining
+        self.jumping = True        
+
+    def runAnimation(self, numOfWaitFrames, listOfAllImages): #listOfAllImages in this animation
+
+        if self.index < len(listOfAllImages):
+            if self.current_frame >= numOfWaitFrames: # has to wait for frames to change animation
+                self.current_frame = 0
+                self.AnimImage = listOfAllImages[self.index]
+                self.index +=1
+        else:
+            self.isSlapping = False # add other animation variables here all to false
+            self.index = 0
+
+        #self.image = pygame.transform.scale(self.AnimImage, birdSize)
+        self.current_frame += 1
+
 
     def checkCollision(collideWith):
         if pygame.sprite.collide_mask(bird, collideWith) == None:
@@ -328,6 +342,7 @@ while True:
     mapX -=1
 
     bird_group.update()
+
     bird_group.draw(screen)
 
     obstacle_group.update()
