@@ -3,7 +3,8 @@ import pygame
 from pygame.locals import *
 from pygame import mixer
 import math
-import sqlite3 
+import sqlite3
+import random
 
 #button pressing bools
 pressed_1 = False
@@ -15,6 +16,7 @@ GAME_SPEED = 1
 obstacle_path = "assets/sprites/obstacles"
 people_path = "assets/sprites/people"
 bird_fly_path = "assets/sprites/bird/fly"
+bird_slap_path = 'assets/sprites/bird/slap'
 clock = pygame.time.Clock()
 
 #LIMITS
@@ -24,11 +26,12 @@ groundLimit = 1000
 #Sound
 mixer.init()
 mixer.music.set_volume(0.7)
-audio_slap_path = 'assets/audio/slap1.mp3'
-
+audio_slap_path = 'assets/audio/slap/slap1.mp3'
+audio_songs_path = 'assets/audio/songs/'
+audio_jump_path = 'assets/audio/jump/'
 
 #Bird
-birdSize = (220, 220) # image x, y
+standardBirdSize = (220, 220) # image x, y
 gravityMagnitude = 0.3;
 pygame.mixer.init()
 
@@ -54,23 +57,32 @@ class Bird(pygame.sprite.Sprite):
         self.AllAnimImages = getImageList(bird_fly_path)
         self.AnimImage = self.AllAnimImages[self.index] # 'AnimImage' is the current image of the animation.
                 
-        self.AllSlapAnimImages = getImageList('assets/sprites/bird/slap')
+        self.AllSlapAnimImages = getImageList(bird_slap_path)
         self.slapAnimNum = len(self.AllSlapAnimImages)
 
+        #Jump animation
+        self.goBackDown = False
+        self.jump_limit = 280
+        self.jump_acceleration = 0.4
+        self.jump_speed = 3
+        self.birdSizeX = standardBirdSize[0]
+        self.birdSizeY = standardBirdSize[1]
+        self.jumpImage = pygame.image.load('assets/sprites/bird/fly/passaro_direita_2.png').convert_alpha()
+        self.jump_audio_list = getAudioList(audio_jump_path)
+
+
     def update(self):
-        if self.isSlapping:
+        
+        if self.isJumping:
+            #self.runAnimation(self.animation_frames, self.AllAnimImages) # fly
+            self.runJumpAnimation()
+        elif self.isSlapping:
             self.runAnimation(self.animation_frames, self.AllSlapAnimImages)
-            
         else:
             self.runAnimation(self.animation_frames, self.AllAnimImages) # fly
 
-        #elif self.isJumping:
-            #self.runAnimation(numOfFramesInAnim, numOfWaitFrames)
-
-        #self.image = pygame.transform.scale(self.AnimImage, birdSize) # image is from Sprite class outside my code
-        self.image = self.AnimImage
-
         #update mask
+        self.image = self.AnimImage
         self.mask = pygame.mask.from_surface(self.image) # image without background to handle collision
 
         self.unDive()
@@ -83,14 +95,34 @@ class Bird(pygame.sprite.Sprite):
         self.current_frame = 10
         self.index = 0 # restart index for slappin animation start in beggining
         self.isSlapping = True
-        #play slapping animation
 
     def jump(self):
-        self.index = 0 # restart index for slappin animation start in beggining
-        self.jumping = True        
+        audio = random.choice(self.jump_audio_list)
+        audio.play()
+
+        #self.index = 0 # restart index for slappin animation start in beggining
+        self.isJumping = True
+        
+    def runJumpAnimation(self): #animation is different then rest bird animations
+        self.AnimImage = self.jumpImage
+        if self.birdSizeX < standardBirdSize[0]:
+            self.jump_speed = 0
+            self.birdSizeX = standardBirdSize[0]
+            self.birdSizeY = standardBirdSize[1]
+            self.isJumping = False
+            self.goBackDown = False
+
+        else:
+            self.birdSizeX = self.birdSizeX + self.jump_speed
+            self.birdSizeY = self.birdSizeY + self.jump_speed
+            self.AnimImage = pygame.transform.scale(self.AnimImage, (self.birdSizeX, self.birdSizeY)) # image is from Sprite class outside my code
+            if self.birdSizeX < self.jump_limit and self.goBackDown == False:
+                self.jump_speed += self.jump_acceleration
+            else:
+                self.goBackDown = True
+                self.jump_speed -= self.jump_acceleration
 
     def runAnimation(self, numOfWaitFrames, listOfAllImages): #listOfAllImages in this animation
-
         if self.index < len(listOfAllImages):
             if self.current_frame >= numOfWaitFrames: # has to wait for frames to change animation
                 self.current_frame = 0
@@ -99,10 +131,9 @@ class Bird(pygame.sprite.Sprite):
         else:
             self.isSlapping = False # add other animation variables here all to false
             self.index = 0
-
-        #self.image = pygame.transform.scale(self.AnimImage, birdSize)
+             
+        self.AnimImage = pygame.transform.scale(self.AnimImage, standardBirdSize) #bigger
         self.current_frame += 1
-
 
     def checkCollision(collideWith):
         if pygame.sprite.collide_mask(bird, collideWith) == None:
@@ -145,14 +176,6 @@ class Bird(pygame.sprite.Sprite):
         x = diveHeight - self.rect[1] #height
         #print("vel: " + str(math.sqrt(x * gravityMagnitude * 2)))
         return math.sqrt(x * gravityMagnitude * 2) #initial velocity (current velocity of dive)
-
-    """
-    def applySacredFormulaUnDive(self, diveHeight):
-        x = diveHeight - self.rect[1] #height
-
-        print("vel: " + str(math.sqrt(-x * gravityMagnitude * 2)))
-        return -math.sqrt(-x * gravityMagnitude * 2) #initial velocity (current velocity of dive)
-    """
 
 class Obstacle(pygame.sprite.Sprite):
 
@@ -203,8 +226,18 @@ def getImageList(the_path):
     myImageList = []
     for file_name in os.listdir(the_path):
         theimage = pygame.image.load(the_path + os.sep + file_name).convert_alpha()
+        x = the_path + os.sep + file_name
         myImageList.append(theimage)
     return myImageList
+
+def getAudioList(the_path):
+    myAudioList = []
+    for file_name in os.listdir(the_path):
+        x = the_path + os.sep + file_name
+        y = file_name
+        theaudio = pygame.mixer.Sound(the_path + file_name)
+        myAudioList.append(theaudio)
+    return myAudioList
 
 # Background
 BACKGROUND = pygame.image.load('assets/sprites/background_day.png')
@@ -284,13 +317,12 @@ def execRowQueryPeople(sqlite_select_Query, the_list):
 
 
 #to exit main menu put false
-setup = True
-while setup:
+startlevel = True
+while startlevel:
     mapX = 0 # goes backward: -1, -2 ...
 
     obstacle_group = pygame.sprite.Group()
     people_group = pygame.sprite.Group()
-    
     bird_group = pygame.sprite.Group()
 
     obstacle_Query = 'SELECT * FROM Obstacles'
@@ -303,13 +335,9 @@ while setup:
     execRowQueryPeople(people_Query, people_list)
 
     bird = Bird()
-    
     bird_group.add(bird)
-    bird_group.draw(screen)
 
-    pygame.display.update()
-
-    setup = False
+    startlevel = False
 
 
 while True:
@@ -322,6 +350,8 @@ while True:
                 pressed_1 = True
             if event.key == pygame.K_SPACE:
                 Bird.slap(bird)
+            if event.key == pygame.K_c:
+                Bird.jump(bird)
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_DOWN:
                 pressed_1 = False
