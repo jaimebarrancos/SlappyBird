@@ -30,24 +30,26 @@
     <Folder Include="assets\audio\slap\" />
     <Folder Include="assets\database\" />
     <Folder Include="assets\audio\" />
+    <Folder Include="assets\fonts\" />
     <Folder Include="assets\sprites\" />
     <Folder Include="assets\sprites\bird\" />
     <Folder Include="assets\sprites\bird\fly\" />
     <Folder Include="assets\sprites\bird\slap\" />
+    <Folder Include="assets\sprites\menu\" />
     <Folder Include="assets\sprites\obstacles\" />
     <Folder Include="assets\sprites\people\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="assets\audio\jump\cartoon_jump.mp3" />
     <Content Include="assets\audio\jump\jump_sound_simple.mp3" />
-    <Content Include="assets\audio\jump\mariojump.mp3" />
     <Content Include="assets\audio\songs\sans.mp3" />
     <Content Include="assets\database\SlappyBirdDB.db" />
+    <Content Include="assets\fonts\pixelFont.ttf" />
     <Content Include="assets\sprites\background_day.png" />
     <Content Include="assets\sprites\bird\slap\slap1.png" />
     <Content Include="assets\sprites\bird\slap\slap2.png" />
     <Content Include="assets\sprites\bird\slap\slap3.png" />
     <Content Include="assets\sprites\bird\slap\slap.png" />
+    <Content Include="assets\sprites\menu\sans.png" />
     <Content Include="assets\sprites\obstacles\amongus.tif" />
     <Content Include="assets\sprites\obstacles\flower.tif" />
     <Content Include="assets\sprites\obstacles\message.png" />

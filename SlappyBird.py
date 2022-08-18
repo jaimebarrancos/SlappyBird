@@ -5,12 +5,13 @@ from pygame import mixer
 import math
 import sqlite3
 import random
+import pygame_menu
 
 #button pressing bools
 pressed_1 = False
 
 #VARIABLES
-SCREEN_WIDHT = 1980
+SCREEN_WIDTH = 1980
 SCREEN_HEIGHT = 1080
 GAME_SPEED = 1
 obstacle_path = "assets/sprites/obstacles"
@@ -46,7 +47,7 @@ class Bird(pygame.sprite.Sprite):
 
         self.image = pygame.image.load('assets/sprites/bird/fly/passaro_direita.png').convert_alpha()
         self.rect = self.image.get_rect()
-        self.rect[0] = 860
+        self.rect[0] = 400 # Bird spot
         self.rect[1] = 80
 
         self.current_image = 0
@@ -241,10 +242,32 @@ def getAudioList(the_path):
 
 # Background
 BACKGROUND = pygame.image.load('assets/sprites/background_day.png')
-screen = pygame.display.set_mode((SCREEN_WIDHT, SCREEN_HEIGHT))
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 pygame.init()
 pygame.display.set_caption('Slappy Bird')
+FPS = 60
+
+
+# Text Renderer
+def text_format(message, textFont, textSize, textColor):
+    newFont = pygame.font.Font(textFont, textSize)
+    newText = newFont.render(message, 0, textColor)
+ 
+    return newText
+
+# Colors
+white=(255, 255, 255)
+black=(0, 0, 0)
+gray=(50, 50, 50)
+red=(255, 0, 0)
+green=(0, 255, 0)
+blue=(0, 0, 255)
+yellow=(255, 255, 0)
+ 
+# Game Fonts
+font = "assets/fonts/pixelFont.ttf"
+
 
 obstacle_dict = {} # dictionary with name of image as key (ex: "flower") and image as value
 getImageDict(obstacle_path, obstacle_dict)
@@ -268,7 +291,7 @@ def execRowQuery(sqlite_select_Query, the_list):
             spawnLocation = row[2]
             height = row[3]
             
-            newObstacle = Obstacle(obstacle_dict[imgType], height, spawnLocation);
+            newObstacle = Obstacle(obstacle_dict[imgType], height, spawnLocation)
             obstacle_list.append(newObstacle)
 
             obstacle_group.add(newObstacle)
@@ -299,7 +322,7 @@ def execRowQueryPeople(sqlite_select_Query, the_list):
             spawnLocation = row[2]
             height = row[3]
             
-            newPerson = Person(person_dict[imgType], height, spawnLocation);
+            newPerson = Person(person_dict[imgType], height, spawnLocation)
             people_list.append(newPerson)
 
             people_group.add(newPerson)
@@ -313,77 +336,128 @@ def execRowQueryPeople(sqlite_select_Query, the_list):
         if sqliteConnection:
             sqliteConnection.close()
             print("The SQLite connection is closed")
+         
 
 
+obstacle_group = pygame.sprite.Group()
+people_group = pygame.sprite.Group()
+bird_group = pygame.sprite.Group()
 
-#to exit main menu put false
-startlevel = True
-while startlevel:
+obstacle_Query = 'SELECT * FROM Obstacles'
+obstacle_list = [] # list with all obstacles
+    
+people_Query = 'SELECT * FROM People'
+people_list = [] # list with all people
+
+execRowQuery(obstacle_Query, obstacle_list)
+execRowQueryPeople(people_Query, people_list)
+
+bird = Bird()
+bird_group.add(bird)
+
+# Main Menu
+def main_menu():
+ 
+    menu=True
+    selected="start"
+ 
+    while menu:
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type==pygame.KEYDOWN:
+                if event.key==pygame.K_UP:
+                    selected="start"
+                elif event.key==pygame.K_DOWN:
+                    selected="quit"
+                if event.key==pygame.K_RETURN:
+                    if selected=="start":
+                        runGame()
+                    if selected=="quit":
+                        pygame.quit()
+                        quit()
+ 
+        # Main Menu UI
+        screen.fill(blue)
+        title=text_format("Slappy Bird", font, 90, yellow)
+        if selected=="start":
+            text_start=text_format("START", font, 75, white)
+        else:
+            text_start = text_format("START", font, 75, black)
+        if selected=="quit":
+            text_quit=text_format("QUIT", font, 75, white)
+        else:
+            text_quit = text_format("QUIT", font, 75, black)
+ 
+        title_rect=title.get_rect()
+        start_rect=text_start.get_rect()
+        quit_rect=text_quit.get_rect()
+ 
+        
+        sansyboi = pygame.image.load('assets/sprites/menu/sans.png')
+        smalSans = pygame.transform.scale(sansyboi, (450, 600))
+        screen.blit(smalSans, (1300, 600))
+        #image_widget.translate(100, 100)
+
+        # Main Menu Text 
+        screen.blit(title, (SCREEN_WIDTH/2 - (title_rect[2]/2), 80))
+        screen.blit(text_start, (SCREEN_WIDTH/2 - (start_rect[2]/2), 300))
+        screen.blit(text_quit, (SCREEN_WIDTH/2 - (quit_rect[2]/2), 360))
+        screen.blit(text_quit, (SCREEN_WIDTH/2 - (quit_rect[2]/2), 360))
+
+        pygame.display.update()
+        clock.tick(FPS)
+
+def runGame():
     mapX = 0 # goes backward: -1, -2 ...
+    global pressed_1
+    while True:
+        clock.tick(FPS) #gets called every frame (60 fps)
 
-    obstacle_group = pygame.sprite.Group()
-    people_group = pygame.sprite.Group()
-    bird_group = pygame.sprite.Group()
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                if event.key == pygame.K_DOWN:
+                    pressed_1 = True
+                if event.key == pygame.K_SPACE:
+                    Bird.slap(bird)
+                if event.key == pygame.K_c:
+                    Bird.jump(bird)
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_DOWN:
+                    pressed_1 = False
+            if event.type == QUIT:
+                pygame.quit()
 
-    obstacle_Query = 'SELECT * FROM Obstacles'
-    obstacle_list = [] # list with all obstacles
+        if bird.isSlapping:
+            for person in people_list:
+                if Bird.checkCollision(person):
+                    mixer.music.load(audio_slap_path)
+                    mixer.music.play()
+        else:  
+            for obs in obstacle_list:
+                if Bird.checkCollision(obs):
+                    print("Collision")
     
-    people_Query = 'SELECT * FROM People'
-    people_list = [] # list with all people
+        screen.blit(BACKGROUND, (mapX, 0))
+        mapX -=1
 
-    execRowQuery(obstacle_Query, obstacle_list)
-    execRowQueryPeople(people_Query, people_list)
+        bird_group.update()
 
-    bird = Bird()
-    bird_group.add(bird)
+        bird_group.draw(screen)
 
-    startlevel = False
+        obstacle_group.update()
+        obstacle_group.draw(screen)
 
+        people_group.update()
+        people_group.draw(screen)
 
-while True:
-
-    clock.tick(60) #gets called every frame (60 fps)
-
-    for event in pygame.event.get():
-        if event.type == KEYDOWN:
-            if event.key == pygame.K_DOWN:
-                pressed_1 = True
-            if event.key == pygame.K_SPACE:
-                Bird.slap(bird)
-            if event.key == pygame.K_c:
-                Bird.jump(bird)
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_DOWN:
-                pressed_1 = False
-        if event.type == QUIT:
-            pygame.quit()
-
-    if bird.isSlapping:
-        for person in people_list:
-            if Bird.checkCollision(person):
-                mixer.music.load(audio_slap_path)
-                mixer.music.play()
-    else:  
-        for obs in obstacle_list:
-            if Bird.checkCollision(obs):
-                print("Collision")
-    
-    screen.blit(BACKGROUND, (mapX, 0))
-    mapX -=1
-
-    bird_group.update()
-
-    bird_group.draw(screen)
-
-    obstacle_group.update()
-    obstacle_group.draw(screen)
-
-    people_group.update()
-    people_group.draw(screen)
-
-    pygame.display.update()
+        pygame.display.update()
 
 
+main_menu()
 
 
-#TODO bird jump towords screen (increase size of bird while going up then decrease) 
+#TODO add whoosh when bird goes down
+# add different whosh when misses
+# Bird gets a call (pulls out giant nokia phone) do nuno e diz o tutorial
