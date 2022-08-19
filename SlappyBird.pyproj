@@ -38,6 +38,7 @@
     <Folder Include="assets\sprites\menu\" />
     <Folder Include="assets\sprites\obstacles\" />
     <Folder Include="assets\sprites\people\" />
+    <Folder Include="Scripts\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\audio\jump\jump_sound_simple.mp3" />
@@ -58,6 +59,7 @@
     <Content Include="assets\sprites\bird\fly\passaro_direita_3.png" />
     <Content Include="assets\sprites\obstacles\stop_sign.tif" />
     <Content Include="assets\sprites\people\chad.png" />
+    <Content Include="Scripts\Tutorial.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

@@ -36,11 +36,18 @@ standardBirdSize = (220, 220) # image x, y
 gravityMagnitude = 0.3;
 pygame.mixer.init()
 
+
 class Bird(pygame.sprite.Sprite):
     speed = 0 #initial speed value
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
+        
+        self.lives = 3
+        self.totalInvulnerabilityTime = 60 * 3 # 3 seconds
+        self.currentInvulnerabilityTime = self.totalInvulnerabilityTime
+        self.isInvulnerable = False
+
         
         self.isSlapping = False
         self.isJumping = False
@@ -81,6 +88,14 @@ class Bird(pygame.sprite.Sprite):
             self.runAnimation(self.animation_frames, self.AllSlapAnimImages)
         else:
             self.runAnimation(self.animation_frames, self.AllAnimImages) # fly
+            
+        if self.isInvulnerable:
+            self.currentInvulnerabilityTime -=1
+            #TODO change image
+            if self.currentInvulnerabilityTime == 0:
+                self.currentInvulnerabilityTime = self.totalInvulnerabilityTime
+                self.isInvulnerable = False
+                
 
         #update mask
         self.image = self.AnimImage
@@ -91,6 +106,19 @@ class Bird(pygame.sprite.Sprite):
 
         #apply movement changes
         self.rect[1] = self.rect[1] + self.speed
+
+
+    def checkObsCollision(self, collideWith):
+        if not pygame.sprite.collide_mask(self, collideWith) == None: # if it collides
+            if not self.isInvulnerable:
+                self.isInvulnerable = True
+                self.lives -= 1
+                #play audio here
+
+    def checkPersonCollision(self, collideWith):
+        if not pygame.sprite.collide_mask(self, collideWith) == None:
+            mixer.music.load(audio_slap_path)
+            mixer.music.play()
 
     def slap(self):
         self.current_frame = 10
@@ -135,11 +163,6 @@ class Bird(pygame.sprite.Sprite):
              
         self.AnimImage = pygame.transform.scale(self.AnimImage, standardBirdSize) #bigger
         self.current_frame += 1
-
-    def checkCollision(collideWith):
-        if pygame.sprite.collide_mask(bird, collideWith) == None:
-            return False
-        else: return True
 
     def buttonPress(self, diveHeight):
         if pressed_1:
@@ -409,11 +432,16 @@ def main_menu():
         pygame.display.update()
         clock.tick(FPS)
 
+def showLifeCounter():
+    life_text = text_format('lives ' + str(bird.lives), font, 75, white)
+    screen.blit(life_text, (70, 45))
+
 def runGame():
+
     mapX = 0 # goes backward: -1, -2 ...
     global pressed_1
     while True:
-        clock.tick(FPS) #gets called every frame (60 fps)
+        clock.tick(FPS)
 
         for event in pygame.event.get():
             if event.type == KEYDOWN:
@@ -431,19 +459,19 @@ def runGame():
 
         if bird.isSlapping:
             for person in people_list:
-                if Bird.checkCollision(person):
-                    mixer.music.load(audio_slap_path)
-                    mixer.music.play()
+                bird.checkPersonCollision(person)
+
         else:  
             for obs in obstacle_list:
-                if Bird.checkCollision(obs):
-                    print("Collision")
+                bird.checkObsCollision(obs)
+
     
         screen.blit(BACKGROUND, (mapX, 0))
         mapX -=1
 
-        bird_group.update()
+        showLifeCounter()
 
+        bird_group.update()
         bird_group.draw(screen)
 
         obstacle_group.update()
@@ -458,6 +486,8 @@ def runGame():
 main_menu()
 
 
-#TODO add whoosh when bird goes down
+#TODO
+#charge up battery for jump with slaps
+#add whoosh when bird goes down
 # add different whosh when misses
 # Bird gets a call (pulls out giant nokia phone) do nuno e diz o tutorial
