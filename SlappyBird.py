@@ -75,7 +75,7 @@ class Bird(pygame.sprite.Sprite):
         self.jump_speed = 3
         self.birdSizeX = standardBirdSize[0]
         self.birdSizeY = standardBirdSize[1]
-        self.jumpImage = pygame.image.load('assets/sprites/bird/fly/passaro_direita_2.png').convert_alpha()
+        self.jumpImage = pygame.image.load('assets/sprites/bird/passaro_direita_jump.png').convert_alpha()
         self.jump_audio_list = getAudioList(audio_jump_path)
 
 
@@ -263,14 +263,21 @@ def getAudioList(the_path):
         myAudioList.append(theaudio)
     return myAudioList
 
+
+x = 10
+y = 10
+os.environ['SDL_VIDEO_WINDOW_POS'] = '%d,%d' % (x,y)
+
+
+
+pygame.init()
 # Background
 BACKGROUND = pygame.image.load('assets/sprites/background_day.png')
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-pygame.init()
+
 pygame.display.set_caption('Slappy Bird')
 FPS = 60
-
 
 # Text Renderer
 def text_format(message, textFont, textSize, textColor):
@@ -437,6 +444,10 @@ def showLifeCounter():
     screen.blit(life_text, (70, 45))
 
 def runGame():
+    
+    #global screen
+    #finalWin = screen       
+    #finalWin = pygame.display.set_mode((1366, 768))
 
     mapX = 0 # goes backward: -1, -2 ...
     global pressed_1
@@ -480,7 +491,22 @@ def runGame():
         people_group.update()
         people_group.draw(screen)
 
+
+        '''
+
+        ScaledWin = pygame.transform.scale(screen, (1366, 768)) # (1366, 768)
+
+        ScaledWin.blit(finalWin, (0,0))
+        '''
         pygame.display.update()
+         
+        #bilshit '''
+        '''
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        xx = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        yy = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        '''
+
 
 
 main_menu()
