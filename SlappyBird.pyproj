@@ -59,6 +59,7 @@
     <Content Include="assets\sprites\bird\fly\passaro_direita_3.png" />
     <Content Include="assets\sprites\obstacles\stop_sign.tif" />
     <Content Include="assets\sprites\people\chad.png" />
+    <Content Include="assets\sprites\people\granny.png" />
     <Content Include="Scripts\Tutorial.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

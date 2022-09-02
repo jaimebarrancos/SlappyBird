@@ -264,11 +264,6 @@ def getAudioList(the_path):
     return myAudioList
 
 
-x = 10
-y = 10
-os.environ['SDL_VIDEO_WINDOW_POS'] = '%d,%d' % (x,y)
-
-
 
 pygame.init()
 # Background
@@ -513,7 +508,7 @@ main_menu()
 
 
 #TODO
-#charge up battery for jump with slaps
-#add whoosh when bird goes down
+# charge up battery for jump with slaps
+# add whoosh when bird goes down
 # add different whosh when misses
 # Bird gets a call (pulls out giant nokia phone) do nuno e diz o tutorial
