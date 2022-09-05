@@ -26,26 +26,44 @@
   <ItemGroup>
     <Folder Include="assets\" />
     <Folder Include="assets\audio\jump\" />
+    <Folder Include="assets\audio\dive\" />
+    <Folder Include="assets\audio\extra\" />
+    <Folder Include="assets\audio\hit\" />
     <Folder Include="assets\audio\songs\" />
     <Folder Include="assets\audio\slap\" />
+    <Folder Include="assets\cutscene\intro\" />
     <Folder Include="assets\database\" />
     <Folder Include="assets\audio\" />
     <Folder Include="assets\fonts\" />
+    <Folder Include="assets\cutscene\" />
     <Folder Include="assets\sprites\" />
     <Folder Include="assets\sprites\bird\" />
     <Folder Include="assets\sprites\bird\fly\" />
     <Folder Include="assets\sprites\bird\slap\" />
     <Folder Include="assets\sprites\menu\" />
+    <Folder Include="assets\sprites\battery\" />
     <Folder Include="assets\sprites\obstacles\" />
     <Folder Include="assets\sprites\people\" />
     <Folder Include="Scripts\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="assets\audio\dive\whoosh.mp3" />
+    <Content Include="assets\audio\hit\hit.mp3" />
     <Content Include="assets\audio\jump\jump_sound_simple.mp3" />
+    <Content Include="assets\audio\slap\slap1.mp3" />
+    <Content Include="assets\audio\slap\whoosh.mp3" />
     <Content Include="assets\audio\songs\sans.mp3" />
+    <Content Include="assets\cutscene\intro\intro_manga_1.png" />
+    <Content Include="assets\cutscene\intro\intro_manga_2.png" />
+    <Content Include="assets\cutscene\intro\intro_manga_3.png" />
+    <Content Include="assets\cutscene\intro\intro_manga_4.png" />
     <Content Include="assets\database\SlappyBirdDB.db" />
     <Content Include="assets\fonts\pixelFont.ttf" />
     <Content Include="assets\sprites\background_day.png" />
+    <Content Include="assets\sprites\battery\charge1_bat.png" />
+    <Content Include="assets\sprites\battery\charge2_bat.png" />
+    <Content Include="assets\sprites\battery\charge3_bat.png" />
+    <Content Include="assets\sprites\battery\empty_bat.png" />
     <Content Include="assets\sprites\bird\slap\slap1.png" />
     <Content Include="assets\sprites\bird\slap\slap2.png" />
     <Content Include="assets\sprites\bird\slap\slap3.png" />
@@ -60,6 +78,7 @@
     <Content Include="assets\sprites\obstacles\stop_sign.tif" />
     <Content Include="assets\sprites\people\chad.png" />
     <Content Include="assets\sprites\people\granny.png" />
+    <Content Include="assets\sprites\People\nerd.png" />
     <Content Include="Scripts\Tutorial.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

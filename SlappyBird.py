@@ -6,14 +6,18 @@ import math
 import sqlite3
 import random
 import pygame_menu
+import time
 
-#button pressing bools
+
+#bools
 pressed_1 = False
+isSlappingPerson = False
+hasFinishedTutorial = False
 
 #VARIABLES
 SCREEN_WIDTH = 1980
 SCREEN_HEIGHT = 1080
-GAME_SPEED = 1
+GAME_SPEED = 1.5
 obstacle_path = "assets/sprites/obstacles"
 people_path = "assets/sprites/people"
 bird_fly_path = "assets/sprites/bird/fly"
@@ -28,8 +32,10 @@ groundLimit = 1000
 mixer.init()
 mixer.music.set_volume(0.7)
 audio_slap_path = 'assets/audio/slap/slap1.mp3'
+audio_slap_miss_path = 'assets/audio/slap/whoosh.mp3'
 audio_songs_path = 'assets/audio/songs/'
 audio_jump_path = 'assets/audio/jump/'
+audio_dive_path = 'assets/audio/dive/whoosh.mp3'
 
 #Bird
 standardBirdSize = (220, 220) # image x, y
@@ -48,7 +54,9 @@ class Bird(pygame.sprite.Sprite):
         self.currentInvulnerabilityTime = self.totalInvulnerabilityTime
         self.isInvulnerable = False
 
-        
+        self.waitTimerBattery = 0
+        self.waitTimeBattery = 75 # 1.25 seconds
+
         self.isSlapping = False
         self.isJumping = False
 
@@ -80,12 +88,13 @@ class Bird(pygame.sprite.Sprite):
 
 
     def update(self):
-        
+        global isSlappingPerson
         if self.isJumping:
             #self.runAnimation(self.animation_frames, self.AllAnimImages) # fly
             self.runJumpAnimation()
         elif self.isSlapping:
             self.runAnimation(self.animation_frames, self.AllSlapAnimImages)
+            isSlappingPerson = True
         else:
             self.runAnimation(self.animation_frames, self.AllAnimImages) # fly
             
@@ -113,17 +122,31 @@ class Bird(pygame.sprite.Sprite):
             if not self.isInvulnerable:
                 self.isInvulnerable = True
                 self.lives -= 1
-                #play audio here
+                pygame.mixer.Channel(1).play(pygame.mixer.Sound('assets/audio/hit/hit.mp3'))
 
     def checkPersonCollision(self, collideWith):
+        global batteryCharge
+        
         if not pygame.sprite.collide_mask(self, collideWith) == None:
             mixer.music.load(audio_slap_path)
             mixer.music.play()
 
+            if self.waitTimerBattery == 0:
+                self.waitTimerBattery += 1
+                batteryCharge += 1
+                if batteryCharge == 4:
+                    batteryCharge = 3
+
+            return True
+
+
+
     def slap(self):
+        global isSlappingPerson
         self.current_frame = 10
         self.index = 0 # restart index for slappin animation start in beggining
         self.isSlapping = True
+        isSlappingPerson = True
 
     def jump(self):
         audio = random.choice(self.jump_audio_list)
@@ -172,6 +195,8 @@ class Bird(pygame.sprite.Sprite):
     def diveHold(self, diveHeight): 
         if self.shouldItDive(diveHeight): 
             self.speed = self.applySacredFormula(diveHeight)
+            mixer.music.load(audio_dive_path)
+            mixer.music.play()
             #because they are float values somewhat in this range (change if increase or decrease base acceleration alot)
             if self.rect[1] < diveHeight + 10 and self.rect[1] > diveHeight -10:
                 self.speed = 0
@@ -232,13 +257,6 @@ class Person(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
 
-    '''
-# personNumber identifies the person to have food ex personNumber = 7, a 7a pessoa tem food
-class Food(pygame.sprite.Sprite):
-    def __init__(self, personNumber, ypos, xpos):
-        pygame.sprite.Sprite.__init__(self)
-    '''
-
 def getImageDict(the_path, the_dict):
     filenames = [f for f in os.listdir(the_path) if f.endswith('.png') or f.endswith('.tif')]
     
@@ -263,12 +281,10 @@ def getAudioList(the_path):
         myAudioList.append(theaudio)
     return myAudioList
 
-
-
 pygame.init()
 # Background
-BACKGROUND = pygame.image.load('assets/sprites/background_day.png')
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+BACKGROUND = pygame.image.load('assets/sprites/background_day.png').convert()
 
 
 pygame.display.set_caption('Slappy Bird')
@@ -438,25 +454,140 @@ def showLifeCounter():
     life_text = text_format('lives ' + str(bird.lives), font, 75, white)
     screen.blit(life_text, (70, 45))
 
+empty_battery = pygame.image.load('assets/sprites/battery/empty_bat.png')
+charge1_bat = pygame.image.load('assets/sprites/battery/charge1_bat.png')
+charge2_bat = pygame.image.load('assets/sprites/battery/charge2_bat.png')
+charge3_bat = pygame.image.load('assets/sprites/battery/charge3_bat.png')
+empty_battery = pygame.transform.scale(empty_battery, (400, 200))
+
+batteryCharge = 0
+def showBattery(): # if charged can jump
+    if batteryCharge == 0:
+        screen.blit(empty_battery, (1350, 50))
+    elif batteryCharge == 1:
+        screen.blit(charge1_bat, (1350, 50))
+    elif batteryCharge == 2:
+        screen.blit(charge2_bat, (1350, 50))
+    elif batteryCharge == 3:
+        screen.blit(charge3_bat, (1350, 50))
+
+def showStartCutscene():
+    cutSceneTimer = 0
+    timePerScene = 3 * 60 # 3 seconds
+    scene_image = pygame.image.load('assets/cutscene/intro/intro_manga_1.png')
+    scene_image_2 = pygame.image.load('assets/cutscene/intro/intro_manga_2.png')
+    scene_image_3 = pygame.image.load('assets/cutscene/intro/intro_manga_3.png')
+    scene_image_4 = pygame.image.load('assets/cutscene/intro/intro_manga_4.png')
+
+    while True:
+        if cutSceneTimer < timePerScene:
+            screen.blit(scene_image, (0, 0))
+            pygame.display.update()
+            clock.tick(FPS)
+            cutSceneTimer +=1
+        else: 
+            cutSceneTimer = 0
+            break
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                quit()
+
+
+    while True:
+        if cutSceneTimer < timePerScene:
+            screen.blit(scene_image_2, (0, 0))
+            pygame.display.update()
+            clock.tick(FPS)
+            cutSceneTimer +=1
+        else: 
+            cutSceneTimer = 0
+            break
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                quit()
+
+
+    while True:
+        if cutSceneTimer < timePerScene:
+            screen.blit(scene_image_3, (0, 0))
+            pygame.display.update()
+            clock.tick(FPS)
+            cutSceneTimer +=1
+        else: 
+            cutSceneTimer = 0
+            break
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                quit()
+
+    while True:
+        if cutSceneTimer < timePerScene:
+            screen.blit(scene_image_4, (0, 0))
+            pygame.display.update()
+            clock.tick(FPS)
+            cutSceneTimer +=1
+        else: 
+            cutSceneTimer = 0
+            break
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                quit()
+
 def runGame():
-    
+
     #global screen
     #finalWin = screen       
     #finalWin = pygame.display.set_mode((1366, 768))
 
     mapX = 0 # goes backward: -1, -2 ...
     global pressed_1
+    global batteryCharge
+    global isSlappingPerson
+    global hasFinishedTutorial
+
+    if hasFinishedTutorial:
+        mapX = 201 #skip tutorial
+
     while True:
         clock.tick(FPS)
+
+        # insert extras here
+        if mapX == 200:
+            hasFinishedTutorial = True
+        '''
+        if mapX == - 30:
+            ring = pygame.mixer.Sound("ring and tutorial sound here")
+            ring.play()
+
+        if mapX == - 70:
+            bird.image = pygame.image.load('assets/sprites/bird/passaro_phone.png').convert_alpha()
+        '''
+#       if bird.lives == 0:
+#           main_menu()
+
+        if mapX == 0:
+            showStartCutscene()
+
+        if bird.waitTimerBattery <= bird.waitTimeBattery and not bird.waitTimerBattery == 0:
+            bird.waitTimerBattery += 1
+        else:
+            bird.waitTimerBattery = 0
 
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == pygame.K_DOWN:
                     pressed_1 = True
                 if event.key == pygame.K_SPACE:
-                    Bird.slap(bird)
+                    if bird.waitTimerBattery ==	0:
+                        Bird.slap(bird)                
                 if event.key == pygame.K_c:
-                    Bird.jump(bird)
+                    if batteryCharge == 3:
+                        Bird.jump(bird)
+                        batteryCharge = 0
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_DOWN:
                     pressed_1 = False
@@ -464,18 +595,28 @@ def runGame():
                 pygame.quit()
 
         if bird.isSlapping:
-            for person in people_list:
-                bird.checkPersonCollision(person)
+            if isSlappingPerson == True:
+                for person in people_list:
+                    if bird.checkPersonCollision(person):
+                        isSlappingPerson = True
+                        break
+                    elif not bird.checkPersonCollision(person):
+                        isSlappingPerson = False
+                        mixer.music.load(audio_slap_miss_path)
+                        mixer.music.play()
+            else:
+                bird.waitTimerBattery = 0
 
-        else:  
-            for obs in obstacle_list:
-                bird.checkObsCollision(obs)
+         
+        for obs in obstacle_list:
+            bird.checkObsCollision(obs)
 
     
         screen.blit(BACKGROUND, (mapX, 0))
         mapX -=1
 
         showLifeCounter()
+        showBattery()
 
         bird_group.update()
         bird_group.draw(screen)
@@ -488,27 +629,20 @@ def runGame():
 
 
         '''
-
         ScaledWin = pygame.transform.scale(screen, (1366, 768)) # (1366, 768)
-
         ScaledWin.blit(finalWin, (0,0))
         '''
         pygame.display.update()
-         
-        #bilshit '''
+
         '''
         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         xx = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         yy = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         '''
 
-
-
 main_menu()
 
 
 #TODO
-# charge up battery for jump with slaps
-# add whoosh when bird goes down
-# add different whosh when misses
+
 # Bird gets a call (pulls out giant nokia phone) do nuno e diz o tutorial
