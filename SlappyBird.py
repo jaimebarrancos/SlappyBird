@@ -451,14 +451,20 @@ def main_menu():
         clock.tick(FPS)
 
 def showLifeCounter():
-    life_text = text_format('lives ' + str(bird.lives), font, 75, white)
+    life_text = text_format('vida ', font, 75, white)
+    life_num = text_format(str(bird.lives), font, 75, red)
     screen.blit(life_text, (70, 45))
+    screen.blit(life_num, (300, 45))
 
 empty_battery = pygame.image.load('assets/sprites/battery/empty_bat.png')
+empty_battery = pygame.transform.scale(empty_battery, (400, 250))
 charge1_bat = pygame.image.load('assets/sprites/battery/charge1_bat.png')
+charge1_bat = pygame.transform.scale(charge1_bat, (400, 250))
 charge2_bat = pygame.image.load('assets/sprites/battery/charge2_bat.png')
+charge2_bat = pygame.transform.scale(charge2_bat, (400, 250))
 charge3_bat = pygame.image.load('assets/sprites/battery/charge3_bat.png')
-empty_battery = pygame.transform.scale(empty_battery, (400, 200))
+charge3_bat = pygame.transform.scale(charge3_bat, (400, 250))
+
 
 batteryCharge = 0
 def showBattery(): # if charged can jump
@@ -493,7 +499,6 @@ def showStartCutscene():
                 pygame.quit()
                 quit()
 
-
     while True:
         if cutSceneTimer < timePerScene:
             screen.blit(scene_image_2, (0, 0))
@@ -507,7 +512,6 @@ def showStartCutscene():
             if event.type==pygame.QUIT:
                 pygame.quit()
                 quit()
-
 
     while True:
         if cutSceneTimer < timePerScene:
