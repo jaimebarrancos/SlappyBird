@@ -48,6 +48,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\audio\dive\whoosh.mp3" />
+    <Content Include="assets\audio\extra\tiagoChad.mp3" />
+    <Content Include="assets\audio\extra\tutorial.mp3" />
+    <Content Include="assets\audio\songs\bushwick.mp3" />
     <Content Include="assets\audio\hit\hit.mp3" />
     <Content Include="assets\audio\jump\jump_sound_simple.mp3" />
     <Content Include="assets\audio\slap\slap1.mp3" />
@@ -69,16 +72,22 @@
     <Content Include="assets\sprites\bird\slap\slap3.png" />
     <Content Include="assets\sprites\bird\slap\slap.png" />
     <Content Include="assets\sprites\menu\sans.png" />
+    <Content Include="assets\sprites\menu\wally.png" />
     <Content Include="assets\sprites\obstacles\amongus.tif" />
     <Content Include="assets\sprites\obstacles\flower.tif" />
+    <Content Include="assets\sprites\obstacles\light_post_1.png" />
+    <Content Include="assets\sprites\obstacles\light_post_2.png" />
     <Content Include="assets\sprites\obstacles\message.png" />
     <Content Include="assets\sprites\bird\fly\passaro_direita.png" />
     <Content Include="assets\sprites\bird\fly\passaro_direita_2.png" />
     <Content Include="assets\sprites\bird\fly\passaro_direita_3.png" />
+    <Content Include="assets\sprites\obstacles\stoplight_1.png" />
+    <Content Include="assets\sprites\obstacles\stoplight_2.png" />
     <Content Include="assets\sprites\obstacles\stop_sign.tif" />
     <Content Include="assets\sprites\people\chad.png" />
     <Content Include="assets\sprites\people\granny.png" />
-    <Content Include="assets\sprites\People\nerd.png" />
+    <Content Include="assets\sprites\people\masterbaiter.png" />
+    <Content Include="assets\sprites\people\woman.png" />
     <Content Include="Scripts\Tutorial.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

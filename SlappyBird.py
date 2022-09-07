@@ -104,7 +104,6 @@ class Bird(pygame.sprite.Sprite):
             if self.currentInvulnerabilityTime == 0:
                 self.currentInvulnerabilityTime = self.totalInvulnerabilityTime
                 self.isInvulnerable = False
-                
 
         #update mask
         self.image = self.AnimImage
@@ -377,7 +376,6 @@ def execRowQueryPeople(sqlite_select_Query, the_list):
         if sqliteConnection:
             sqliteConnection.close()
             print("The SQLite connection is closed")
-         
 
 
 obstacle_group = pygame.sprite.Group()
@@ -446,6 +444,9 @@ def main_menu():
         screen.blit(text_start, (SCREEN_WIDTH/2 - (start_rect[2]/2), 300))
         screen.blit(text_quit, (SCREEN_WIDTH/2 - (quit_rect[2]/2), 360))
         screen.blit(text_quit, (SCREEN_WIDTH/2 - (quit_rect[2]/2), 360))
+
+
+        screen.blit(pygame.image.load('assets/sprites/menu/wally.png'), (1300, 560))
 
         pygame.display.update()
         clock.tick(FPS)
@@ -547,31 +548,38 @@ def runGame():
     #finalWin = screen       
     #finalWin = pygame.display.set_mode((1366, 768))
 
-    mapX = 0 # goes backward: -1, -2 ...
+    mapX = -1 # goes backward: -1, -2 ...
     global pressed_1
     global batteryCharge
     global isSlappingPerson
     global hasFinishedTutorial
 
     if hasFinishedTutorial:
-        mapX = 201 #skip tutorial
+        mapX = -2 #skip tutorial
 
     while True:
         clock.tick(FPS)
 
         # insert extras here
-        if mapX == 200:
+        if mapX == 0:
             hasFinishedTutorial = True
-        '''
+        
         if mapX == - 30:
-            ring = pygame.mixer.Sound("ring and tutorial sound here")
-            ring.play()
+            pygame.mixer.Channel(2).play(pygame.mixer.Sound('assets/audio/extra/tutorial.mp3'))
 
+
+        if mapX == - 380:
+            pygame.mixer.Channel(3).play(pygame.mixer.Sound('assets/audio/songs/bushwick.mp3'))
+            pygame.mixer.Channel(3).set_volume(0.1)
+
+        if mapX == - 4150:
+            pygame.mixer.Channel(3).fadeout(1000)
+        '''
         if mapX == - 70:
             bird.image = pygame.image.load('assets/sprites/bird/passaro_phone.png').convert_alpha()
         '''
-#       if bird.lives == 0:
-#           main_menu()
+        if bird.lives == 0:
+            main_menu()
 
         if mapX == 0:
             showStartCutscene()
