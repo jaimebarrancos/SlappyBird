@@ -8,16 +8,17 @@ import random
 import pygame_menu
 import time
 
-
 #bools
 pressed_1 = False
 isSlappingPerson = False
 hasFinishedTutorial = False
 
 #VARIABLES
+mapX = -3650 # goes backward: -1, -2 ...
+initialMapX = mapX
 SCREEN_WIDTH = 1980
 SCREEN_HEIGHT = 1080
-GAME_SPEED = 1.5
+GAME_SPEED = 3
 obstacle_path = "assets/sprites/obstacles"
 people_path = "assets/sprites/people"
 bird_fly_path = "assets/sprites/bird/fly"
@@ -49,6 +50,7 @@ class Bird(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         
+       
         self.lives = 3
         self.totalInvulnerabilityTime = 60 * 3 # 3 seconds
         self.currentInvulnerabilityTime = self.totalInvulnerabilityTime
@@ -86,7 +88,6 @@ class Bird(pygame.sprite.Sprite):
         self.jumpImage = pygame.image.load('assets/sprites/bird/passaro_direita_jump.png').convert_alpha()
         self.jump_audio_list = getAudioList(audio_jump_path)
 
-
     def update(self):
         global isSlappingPerson
         if self.isJumping:
@@ -121,15 +122,15 @@ class Bird(pygame.sprite.Sprite):
             if not self.isInvulnerable:
                 self.isInvulnerable = True
                 self.lives -= 1
+                
                 pygame.mixer.Channel(1).play(pygame.mixer.Sound('assets/audio/hit/hit.mp3'))
+                pygame.mixer.Channel(1).set_volume(0.4)
 
     def checkPersonCollision(self, collideWith):
         global batteryCharge
         
         if not pygame.sprite.collide_mask(self, collideWith) == None:
-            mixer.music.load(audio_slap_path)
-            mixer.music.play()
-
+            pygame.mixer.Channel(6).play(pygame.mixer.Sound(audio_slap_path))
             if self.waitTimerBattery == 0:
                 self.waitTimerBattery += 1
                 batteryCharge += 1
@@ -194,8 +195,7 @@ class Bird(pygame.sprite.Sprite):
     def diveHold(self, diveHeight): 
         if self.shouldItDive(diveHeight): 
             self.speed = self.applySacredFormula(diveHeight)
-            mixer.music.load(audio_dive_path)
-            mixer.music.play()
+
             #because they are float values somewhat in this range (change if increase or decrease base acceleration alot)
             if self.rect[1] < diveHeight + 10 and self.rect[1] > diveHeight -10:
                 self.speed = 0
@@ -226,14 +226,14 @@ class Bird(pygame.sprite.Sprite):
         return math.sqrt(x * gravityMagnitude * 2) #initial velocity (current velocity of dive)
 
 class Obstacle(pygame.sprite.Sprite):
-
     def __init__(self, image, ypos, xpos):
         pygame.sprite.Sprite.__init__(self)
+
         self.image = image
-        
         self.rect = image.get_rect()
         self.rect[1] = ypos
-        self.rect[0] = xpos
+        self.spawnLoc = xpos + mapX
+        self.rect[0] = 1920
 
     def update(self):
         #update mask
@@ -248,7 +248,7 @@ class Person(pygame.sprite.Sprite):
         self.image = image
         self.rect = image.get_rect()
         self.rect[1] = ypos
-        self.rect[0] = xpos
+        self.rect[0] = xpos + mapX
 
     def update(self):
         #update mask
@@ -308,7 +308,6 @@ yellow=(255, 255, 0)
 # Game Fonts
 font = "assets/fonts/pixelFont.ttf"
 
-
 obstacle_dict = {} # dictionary with name of image as key (ex: "flower") and image as value
 getImageDict(obstacle_path, obstacle_dict)
 
@@ -316,7 +315,7 @@ person_dict = {} # dictionary with name of image as key (ex: "chad") and image a
 getImageDict(people_path, person_dict)
 
 #SQL to load all obstacles into the list
-def execRowQuery(sqlite_select_Query, the_list):
+def execRowQuery(sqlite_select_Query):
     try:
         sqliteConnection = sqlite3.connect('assets/database/SlappyBirdDB.db')
         cursor = sqliteConnection.cursor()
@@ -333,10 +332,7 @@ def execRowQuery(sqlite_select_Query, the_list):
             
             newObstacle = Obstacle(obstacle_dict[imgType], height, spawnLocation)
             obstacle_list.append(newObstacle)
-
-            obstacle_group.add(newObstacle)
-            obstacle_group.draw(screen)
-
+            
         cursor.close()
 
     except sqlite3.Error as error:
@@ -347,7 +343,7 @@ def execRowQuery(sqlite_select_Query, the_list):
             print("The SQLite connection is closed")
 
 #SQL to load all people into the list
-def execRowQueryPeople(sqlite_select_Query, the_list):
+def execRowQueryPeople(sqlite_select_Query):
     try:
         sqliteConnection = sqlite3.connect('assets/database/SlappyBirdDB.db')
         cursor = sqliteConnection.cursor()
@@ -364,10 +360,7 @@ def execRowQueryPeople(sqlite_select_Query, the_list):
             
             newPerson = Person(person_dict[imgType], height, spawnLocation)
             people_list.append(newPerson)
-
             people_group.add(newPerson)
-            people_group.draw(screen)
-
         cursor.close()
 
     except sqlite3.Error as error:
@@ -383,16 +376,56 @@ people_group = pygame.sprite.Group()
 bird_group = pygame.sprite.Group()
 
 obstacle_Query = 'SELECT * FROM Obstacles'
-obstacle_list = [] # list with all obstacles
-    
 people_Query = 'SELECT * FROM People'
-people_list = [] # list with all people
-
-execRowQuery(obstacle_Query, obstacle_list)
-execRowQueryPeople(people_Query, people_list)
 
 bird = Bird()
 bird_group.add(bird)
+obstacle_list = [] # list with all obstacle instances
+people_list = [] # list with all people instances
+
+def spawn():
+    global initialMapX
+    i = 0
+    while i<len(obstacle_list): #check all spawn locations; i starts at 1!
+        if mapX == -obstacle_list[i].spawnLoc + initialMapX:  #if map in one of those spawn locations, spawn the obstacle
+            obstacle_group.add(obstacle_list[i])
+        i += 1
+
+def deSpawn():
+    i = 0
+    while i<len(obstacle_list):
+        if -1000 < obstacle_list[i].rect[0] and -900 > obstacle_list[i].rect[0]: #which one of spawned obstacles should despawn
+            obstacle_group.remove(obstacle_list[i])
+            obstacle_list.pop(i)
+        i+=1
+
+'''
+def deSpawn():
+    i = 0
+    while i<len(obstacle_list):
+        if 300 < obstacle_list[i].rect[0] and 400 > obstacle_list[i].rect[0]: #which one of spawned obstacles should despawn
+            obstacle_group.remove(obstacle_list[i])
+            obstacle_list.pop(i)
+        i+=1
+'''
+#-mapObstacles.get(i) = -spawn_location so -mapObstacles.get(i) - 2100 = - despawn_location
+
+
+def initializer():
+    global mapX
+    global obstacle_list
+    global people_list
+    global obstacle_group
+    global people_group
+    obstacle_group = pygame.sprite.Group()
+    people_group = pygame.sprite.Group()
+    obstacle_list = [] # list with all obstacles
+    people_list = [] # list with all people
+    execRowQuery(obstacle_Query)
+    execRowQueryPeople(people_Query)
+    bird.lives = 3
+    #mapX = 0
+
 
 # Main Menu
 def main_menu():
@@ -412,6 +445,7 @@ def main_menu():
                     selected="quit"
                 if event.key==pygame.K_RETURN:
                     if selected=="start":
+                        initializer()
                         runGame()
                     if selected=="quit":
                         pygame.quit()
@@ -432,22 +466,23 @@ def main_menu():
         title_rect=title.get_rect()
         start_rect=text_start.get_rect()
         quit_rect=text_quit.get_rect()
- 
         
-        sansyboi = pygame.image.load('assets/sprites/menu/sans.png')
-        smalSans = pygame.transform.scale(sansyboi, (450, 600))
-        screen.blit(smalSans, (1300, 600))
+        #sansyboi = pygame.image.load('assets/sprites/menu/sans.png')
+        #smalSans = pygame.transform.scale(sansyboi, (450, 600))
+        #screen.blit(smalSans, (1300, 600))
         #image_widget.translate(100, 100)
 
-        # Main Menu Text 
+        # Main Menu Text
         screen.blit(title, (SCREEN_WIDTH/2 - (title_rect[2]/2), 80))
         screen.blit(text_start, (SCREEN_WIDTH/2 - (start_rect[2]/2), 300))
         screen.blit(text_quit, (SCREEN_WIDTH/2 - (quit_rect[2]/2), 360))
         screen.blit(text_quit, (SCREEN_WIDTH/2 - (quit_rect[2]/2), 360))
 
 
-        screen.blit(pygame.image.load('assets/sprites/menu/wally.png'), (1300, 560))
-
+        #screen.blit(pygame.image.load('assets/sprites/menu/wally.png'), (1300, 90))
+        screen.blit(pygame.transform.scale(pygame.image.load('assets/sprites/menu/passaro_dano.png'), (450, 600)), (1300, 00))
+        screen.blit(pygame.transform.scale(pygame.image.load('assets/sprites/menu/majestic_bird.png'), (1000, 850)), (480, 200))
+        screen.blit(pygame.transform.scale(pygame.image.load('assets/sprites/menu/passaro_baixo.png'), (450, 450)), (100, 00))
         pygame.display.update()
         clock.tick(FPS)
 
@@ -456,6 +491,21 @@ def showLifeCounter():
     life_num = text_format(str(bird.lives), font, 75, red)
     screen.blit(life_text, (70, 45))
     screen.blit(life_num, (300, 45))
+
+
+def wait(time): # time in seconds
+    cutSceneTimer = 0
+    while True:
+        if cutSceneTimer < time * 60:
+            clock.tick(FPS)
+            cutSceneTimer +=1
+        else: 
+            cutSceneTimer = 0
+            break
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                quit()
 
 empty_battery = pygame.image.load('assets/sprites/battery/empty_bat.png')
 empty_battery = pygame.transform.scale(empty_battery, (400, 250))
@@ -470,114 +520,93 @@ charge3_bat = pygame.transform.scale(charge3_bat, (400, 250))
 batteryCharge = 0
 def showBattery(): # if charged can jump
     if batteryCharge == 0:
-        screen.blit(empty_battery, (1350, 50))
+        screen.blit(empty_battery, (1550, 0))
     elif batteryCharge == 1:
-        screen.blit(charge1_bat, (1350, 50))
+        screen.blit(charge1_bat, (1550, 0))
     elif batteryCharge == 2:
-        screen.blit(charge2_bat, (1350, 50))
+        screen.blit(charge2_bat, (1550, 0))
     elif batteryCharge == 3:
-        screen.blit(charge3_bat, (1350, 50))
+        screen.blit(charge3_bat, (1550, 0))
+        tip_text = text_format('Clicka "c" para saltares de perigo!', font, 35, green)
+        screen.blit(tip_text, (1200, 200))
 
 def showStartCutscene():
-    cutSceneTimer = 0
-    timePerScene = 3 * 60 # 3 seconds
     scene_image = pygame.image.load('assets/cutscene/intro/intro_manga_1.png')
     scene_image_2 = pygame.image.load('assets/cutscene/intro/intro_manga_2.png')
     scene_image_3 = pygame.image.load('assets/cutscene/intro/intro_manga_3.png')
     scene_image_4 = pygame.image.load('assets/cutscene/intro/intro_manga_4.png')
 
-    while True:
-        if cutSceneTimer < timePerScene:
-            screen.blit(scene_image, (0, 0))
-            pygame.display.update()
-            clock.tick(FPS)
-            cutSceneTimer +=1
-        else: 
-            cutSceneTimer = 0
-            break
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                pygame.quit()
-                quit()
+    screen.blit(scene_image, (0, 0))
+    pygame.display.update()
+    wait(3)
 
-    while True:
-        if cutSceneTimer < timePerScene:
-            screen.blit(scene_image_2, (0, 0))
-            pygame.display.update()
-            clock.tick(FPS)
-            cutSceneTimer +=1
-        else: 
-            cutSceneTimer = 0
-            break
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                pygame.quit()
-                quit()
+    screen.blit(scene_image_2, (0, 0))
+    pygame.display.update()
+    wait(3)
 
-    while True:
-        if cutSceneTimer < timePerScene:
-            screen.blit(scene_image_3, (0, 0))
-            pygame.display.update()
-            clock.tick(FPS)
-            cutSceneTimer +=1
-        else: 
-            cutSceneTimer = 0
-            break
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                pygame.quit()
-                quit()
+    screen.blit(scene_image_3, (0, 0))
+    pygame.display.update()
+    wait(3)
 
-    while True:
-        if cutSceneTimer < timePerScene:
-            screen.blit(scene_image_4, (0, 0))
-            pygame.display.update()
-            clock.tick(FPS)
-            cutSceneTimer +=1
-        else: 
-            cutSceneTimer = 0
-            break
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                pygame.quit()
-                quit()
+    screen.blit(scene_image_4, (0, 0))
+    pygame.display.update()
+    wait(3)
 
 def runGame():
 
-    #global screen
-    #finalWin = screen       
-    #finalWin = pygame.display.set_mode((1366, 768))
+    #Load audio
+    bushwick = pygame.mixer.Sound('assets/audio/songs/bushwick.mp3')
+    tutorial = pygame.mixer.Sound('assets/audio/extra/tutorial.mp3')
+    yoshi = pygame.mixer.Sound('assets/audio/songs/yoshi.mp3')
+    tiagoChad = pygame.mixer.Sound('assets/audio/extra/tiagoChad.mp3')
 
-    mapX = -1 # goes backward: -1, -2 ...
+    playSlapAudio = True
+    slapped_chad = False
+    global mapX
     global pressed_1
     global batteryCharge
     global isSlappingPerson
     global hasFinishedTutorial
 
     if hasFinishedTutorial:
-        mapX = -2 #skip tutorial
+        mapX = -12000 #skip tutorial
 
     while True:
+        
+
         clock.tick(FPS)
+        print (mapX)
+        print("\n")
+
 
         # insert extras here
-        if mapX == 0:
+        if mapX == 199:
             hasFinishedTutorial = True
         
         if mapX == - 30:
-            pygame.mixer.Channel(2).play(pygame.mixer.Sound('assets/audio/extra/tutorial.mp3'))
-
+            pygame.mixer.Channel(2).play(tutorial, 0, 0, 0)
 
         if mapX == - 380:
-            pygame.mixer.Channel(3).play(pygame.mixer.Sound('assets/audio/songs/bushwick.mp3'))
-            pygame.mixer.Channel(3).set_volume(0.1)
+            pygame.mixer.Channel(3).play(bushwick, 0, 0, 2000)
+        
+        if mapX == - 4000:
+            pygame.mixer.Channel(3).pause()
+            pygame.mixer.Channel(4).play(yoshi, 0, 0, 2000)
 
-        if mapX == - 4150:
-            pygame.mixer.Channel(3).fadeout(1000)
         '''
-        if mapX == - 70:
-            bird.image = pygame.image.load('assets/sprites/bird/passaro_phone.png').convert_alpha()
+        if mapX == - 7550 and slapped_chad:
+            pygame.mixer.Channel(4).pause()
+            pygame.mixer.Channel(3).unpause()
+            pygame.mixer.Channel(5).play(tiagoChad, 0, 0, 1000)
+
+            wait(40)        
+
+        if mapX == 8000:
+            pygame.mixer.Channel(3).pause()
+            pygame.mixer.Channel(4).unpause()
         '''
+        # SUS BIT
+
         if bird.lives == 0:
             main_menu()
 
@@ -593,6 +622,10 @@ def runGame():
             if event.type == KEYDOWN:
                 if event.key == pygame.K_DOWN:
                     pressed_1 = True
+                    if playSlapAudio:
+                        mixer.music.load(audio_dive_path)
+                        mixer.music.play()
+                        playSlapAudio = False
                 if event.key == pygame.K_SPACE:
                     if bird.waitTimerBattery ==	0:
                         Bird.slap(bird)                
@@ -603,6 +636,8 @@ def runGame():
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_DOWN:
                     pressed_1 = False
+                    playSlapAudio = True
+
             if event.type == QUIT:
                 pygame.quit()
 
@@ -610,27 +645,41 @@ def runGame():
             if isSlappingPerson == True:
                 for person in people_list:
                     if bird.checkPersonCollision(person):
-                        isSlappingPerson = True
+                        isSlappingPerson = True                            
+                        if mapX < -7200 and mapX > -8000:
+                            slapped_chad = True
                         break
                     elif not bird.checkPersonCollision(person):
                         isSlappingPerson = False
                         mixer.music.load(audio_slap_miss_path)
+                        mixer.music.set_volume(0.2)
                         mixer.music.play()
             else:
                 bird.waitTimerBattery = 0
-
-         
+        start = time.time()
+           
         for obs in obstacle_list:
-            bird.checkObsCollision(obs)
+            if obstacle_group.has(obs):
+                bird.checkObsCollision(obs)
+        end = time.time() 
 
-    
+                    
         screen.blit(BACKGROUND, (mapX, 0))
+
         mapX -=1
+        
 
         showLifeCounter()
         showBattery()
 
+        spawn()
+        deSpawn()
+
+
         bird_group.update()
+        if mapX < - 350 and mapX > - 3600: # entre valores
+            bird.image = pygame.image.load('assets/sprites/bird/passaro_phone.png').convert_alpha()
+            bird.image = pygame.transform.scale(bird.image, (300, 600))
         bird_group.draw(screen)
 
         obstacle_group.update()
@@ -639,22 +688,9 @@ def runGame():
         people_group.update()
         people_group.draw(screen)
 
-
-        '''
-        ScaledWin = pygame.transform.scale(screen, (1366, 768)) # (1366, 768)
-        ScaledWin.blit(finalWin, (0,0))
-        '''
         pygame.display.update()
-
-        '''
-        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        xx = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        yy = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        '''
-
+        print("----------:   " + str(end - start))
 main_menu()
 
 
-#TODO
-
-# Bird gets a call (pulls out giant nokia phone) do nuno e diz o tutorial
+#TODO  obstacle filled with obstacles only have 1 tiny path
