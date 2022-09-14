@@ -14,7 +14,7 @@ isSlappingPerson = False
 hasFinishedTutorial = False
 
 #VARIABLES
-mapX = -11250# goes backward: -1, -2 ...
+mapX = -0# goes backward: -1, -2 ...
 initialMapX = mapX
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
@@ -442,8 +442,6 @@ def main_menu():
             if event.type==pygame.KEYDOWN:
                 if event.key==pygame.K_UP:
                     selected="start"
-                elif event.key==pygame.K_DOWN:
-                    selected="quit"
                 if event.key==pygame.K_RETURN:
                     if selected=="start":
                         initializer()
@@ -459,14 +457,9 @@ def main_menu():
             text_start=text_format("START", font, 75, white)
         else:
             text_start = text_format("START", font, 75, black)
-        if selected=="quit":
-            text_quit=text_format("QUIT", font, 75, white)
-        else:
-            text_quit = text_format("QUIT", font, 75, black)
  
         title_rect=title.get_rect()
         start_rect=text_start.get_rect()
-        quit_rect=text_quit.get_rect()
         
         #sansyboi = pygame.image.load('assets/sprites/menu/sans.png')
         #smalSans = pygame.transform.scale(sansyboi, (450, 600))
@@ -476,7 +469,6 @@ def main_menu():
         # Main Menu Text
         screen.blit(title, (SCREEN_WIDTH/2 - (title_rect[2]/2), 80))
         screen.blit(text_start, (SCREEN_WIDTH/2 - (start_rect[2]/2), 350))
-        screen.blit(text_quit, (SCREEN_WIDTH/2 - (quit_rect[2]/2), 410))
 
         #screen.blit(pygame.image.load('assets/sprites/menu/wally.png'), (1300, 90))
         screen.blit(text_format('Joga com som!!', font, 55, black), (70, 760))
@@ -608,7 +600,7 @@ def runGame():
         if mapX == - 7300:
             pygame.mixer.Channel(3).pause()
             pygame.mixer.Channel(4).unpause()
-            bird.lives = 3
+            bird.lives = 5
 
         if mapX == - 10600:
             pygame.mixer.Channel(8).play(pygame.mixer.Sound('assets/audio/extra/sus.mp3'))
@@ -633,15 +625,15 @@ def runGame():
 
         if bird.lives == 0:
             if mapX < -0 and mapX > -6500:
-                bird.lives = 3
+                bird.lives = 4
                 initialMapX = -3900
             elif mapX < -7200 and mapX > -10200:
                 pygame.mixer.Channel(4).stop()
                 pygame.mixer.Channel(4).play(yoshi, 0, 0, 2000)
-                bird.lives = 3
+                bird.lives = 5
                 initialMapX = -7000
             elif mapX < -11000 and mapX > -14100:
-                bird.lives = 2
+                bird.lives = 6
                 initialMapX = -11100
             else:
                 initialMapX = mapX
@@ -748,7 +740,7 @@ def runGame():
         if mapX <= - 10950 and mapX >= -11050:
             screen.blit(pygame.image.load('assets/cutscene/suscutscene/sus_5.png'), (0, 0))
         if mapX == - 11280:
-            bird.lives = 3
+            bird.lives = 6
             batteryCharge = 3
             pygame.mixer.Channel(8).fadeout(3000)
 
